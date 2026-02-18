@@ -1,0 +1,111 @@
+server:
+  port: 8060
+
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    user:
+      name: admin
+      password: admin
+
+  cloud:
+    gateway:
+      routes:
+
+        # ================= USER SERVICE =================
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userServiceCB
+                fallbackUri: forward:/fallback
+
+        # ================= ACCOUNT SERVICE =================
+        - id: account-service
+          uri: lb://ACCOUNT-SERVICE
+          predicates:
+            - Path=/accounts/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: accountServiceCB
+                fallbackUri: forward:/fallback
+
+        # ================= TRANSACTION SERVICE =================
+        - id: transaction-service
+          uri: lb://TRANSACTION-SERVICE
+          predicates:
+            - Path=/transactions/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: transactionServiceCB
+                fallbackUri: forward:/fallback
+
+        # ================= FUND TRANSFER SERVICE =================
+        - id: fund-transfer-service
+          uri: lb://FUND-TRANSFER-SERVICE
+          predicates:
+            - Path=/transfer/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: fundTransferCB
+                fallbackUri: forward:/fallback
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://admin:admin@localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCB:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      accountServiceCB:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      transactionServiceCB:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      fundTransferCB:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

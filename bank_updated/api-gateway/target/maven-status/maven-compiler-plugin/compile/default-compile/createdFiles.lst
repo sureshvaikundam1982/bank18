@@ -1,0 +1,3 @@
+com\banking\apigateway\ApiGatewayApplication.class
+com\banking\apigateway\SecurityConfig.class
+com\banking\apigateway\controller\FallbackController.class
